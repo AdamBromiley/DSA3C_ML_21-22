@@ -11,7 +11,7 @@ class NeuralNetwork:
 
         self.layers = []
 
-        for i in range(0, layer_count):
+        for i in range(layer_count):
             layer = Layer(weights[i], biases[i], activiation_functions[i])
             self.layers.append(layer)
 

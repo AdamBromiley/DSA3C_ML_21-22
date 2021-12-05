@@ -16,7 +16,7 @@ weights = []
 biases = []
 activation_functions = []
 
-for i in range(0, layer_count - 1):
+for i in range(layer_count - 1):
     inputs = structure[i]
     outputs = structure[i + 1]
 
