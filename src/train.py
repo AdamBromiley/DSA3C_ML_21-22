@@ -14,19 +14,19 @@ from Layer import linear, relu, tanh
 from NNPlayer import NNPlayer, INPUT_SIZE, OUTPUT_SIZE
 
 
-POPULATION_SIZE = 400
+POPULATION_SIZE = 1000
 GENERATIONS = 8000
 
-GAMES_PLAYED = 10
+GAMES_PLAYED = 40
 
 # 51.13.108.128
 # 20.203.186.64
 # 20.79.222.21
 # Best = 400, 1000, 0.3-0.8, 0.3-0.005
 CROSSOVER_CHANCE_START = 0.2
-CROSSOVER_CHANCE_END = 0.5
+CROSSOVER_CHANCE_END = 0.8
 MUTATION_CHANCE_START = 0.3
-MUTATION_CHANCE_END = 0.1
+MUTATION_CHANCE_END = 0.005
 
 CROSSOVER_POINTS = 2
 
@@ -219,7 +219,7 @@ def mutate(child, mutation_rate):
             neuron[mask] += random_neuron[mask]
 
 
-structure = [INPUT_SIZE, OUTPUT_SIZE, OUTPUT_SIZE, OUTPUT_SIZE]
+structure = [INPUT_SIZE, 23, 24, OUTPUT_SIZE]
 layer_count = len(structure)
 
 
