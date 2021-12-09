@@ -7,8 +7,7 @@ GRID_COUNT = 3
 ROW_LENGTH = 3
 COLUMN_LENGTH = 3
 
-# 27 inputs per player, 1 for score difference, and 1 for game progress
-INPUT_SIZE = GRID_COUNT * ROW_LENGTH * COLUMN_LENGTH * 2 + 1 + 1
+INPUT_SIZE = GRID_COUNT * 2 + ROW_LENGTH * 2 + COLUMN_LENGTH * 2 + 1 + 1
 OUTPUT_SIZE = GRID_COUNT * ROW_LENGTH * COLUMN_LENGTH
 
 
@@ -27,13 +26,21 @@ class NNPlayer:
     def play(self, player_state, opponent_state,
              player_score, opponent_score,
              turn, length, pip_count):
+        player_state = numpy.array(player_state)
+        opponent_state = numpy.array(opponent_state)
 
-        flattened_player_state = numpy.array(player_state).flatten()
-        flattened_opponent_state = numpy.array(opponent_state).flatten()
-
-        board_state = numpy.concatenate(
-            (flattened_player_state, flattened_opponent_state)
+        # Sum each column, row, and grid
+        column_sums = numpy.ravel(
+            [player_state.sum((0, 1)), -(opponent_state.sum((0, 1)))], "F"
         )
+        row_sums = numpy.ravel(
+            [player_state.sum((0, 2)), -(opponent_state.sum((0, 2)))], "F"
+        )
+        grid_sums = numpy.ravel(
+            [player_state.sum((1, 2)), -(opponent_state.sum((1, 2)))], "F"
+        )
+
+        board_state = numpy.concatenate((column_sums, row_sums, grid_sums))
 
         score_difference = (player_score - opponent_score) / (pip_count * turn)
         game_progress = turn / length
@@ -52,10 +59,8 @@ class NNPlayer:
         grid = board_position % GRID_COUNT
         row = (board_position // GRID_COUNT) % ROW_LENGTH
         column = board_position // (ROW_LENGTH * COLUMN_LENGTH)
-        
-        move = [grid, row, column]
 
-        return move
+        return [grid, row, column]
 
     def getNN(self):
         return self.neural_network
