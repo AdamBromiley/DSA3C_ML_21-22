@@ -1,6 +1,14 @@
 import numpy
 
 
+def tanh(a):
+    return numpy.tanh(a)
+
+
+def linear(a):
+    return a
+
+
 def relu(a):
     return numpy.maximum(0, a)
 
