@@ -1,8 +1,11 @@
 import copy
 from multiprocessing import Pool
 import os
+import pickle
 import random
+import signal
 import statistics
+import sys
 
 import numpy
 
@@ -28,13 +31,39 @@ MUTATION_CHANCE_END = 0.1
 CROSSOVER_POINTS = 2
 
 
-RESULTS_FILE = f"../results/{POPULATION_SIZE}_{GENERATIONS}_{GAMES_PLAYED}"
-RESULTS_FILE += f"_{CROSSOVER_CHANCE_START}_{CROSSOVER_CHANCE_END}"
-RESULTS_FILE += f"_{MUTATION_CHANCE_START}_{MUTATION_CHANCE_END}.csv"
+GENERATION_STRING = f"{POPULATION_SIZE}_{GENERATIONS}_{GAMES_PLAYED}"
+GENERATION_STRING += f"_{CROSSOVER_CHANCE_START}_{CROSSOVER_CHANCE_END}"
+GENERATION_STRING += f"_{MUTATION_CHANCE_START}_{MUTATION_CHANCE_END}"
+GENERATION_STRING += f"_{CROSSOVER_POINTS}"
+
+
+POPULATION_DUMP_FILEPATH = f"../populations/{GENERATION_STRING}.dat"
+RESULTS_FILEPATH = f"../results/{GENERATION_STRING}.csv"
 
 
 # Create numpy RNG generator
 rng = numpy.random.default_rng()
+
+
+def create_unique_filename(filepath):
+    filename, file_extension = os.path.splitext(filepath)
+    file_existence_count = 1
+
+    while os.path.exists(filepath):
+        filepath = f"{filename} ({file_existence_count}){file_extension}"
+        file_existence_count += 1
+
+    return filepath
+
+
+def save_population():
+    with open(population_dump_filepath, "wb") as f:
+        pickle.dump(players, f)
+
+
+def signal_handler(signal, stack_frame):
+    save_population()
+    sys.exit(0)
 
 
 def create_player():
@@ -200,17 +229,16 @@ win_rates = []
 
 opponent = RandomPlayer()
 
-results_filepath = RESULTS_FILE
-results_filename, results_file_extension = os.path.splitext(results_filepath)
-results_file_existence_count = 1
+results_filepath = create_unique_filename(RESULTS_FILEPATH)
+population_dump_filepath = create_unique_filename(POPULATION_DUMP_FILEPATH)
 
-while os.path.exists(results_filepath):
-    results_filepath = f"{results_filename}"
-    results_filepath += f" ({results_file_existence_count})"
-    results_filepath += f"{results_file_extension}"
-    results_file_existence_count += 1
+signal.signal(signal.SIGINT, signal_handler)
 
-with open(results_filepath, "w") as f:
+with open(results_filepath, "w", 0) as f:
+    results_header = f"Generation, Worst, Lower Quartile, Mean, Median"
+    results_header = f", Upper Quartile, Best"
+    f.write(results_header + "\n")
+
     with Pool() as pool:
         for i in range(GENERATIONS):
             players = pool.map(play_game, players)
@@ -231,9 +259,7 @@ with open(results_filepath, "w") as f:
 
             s = f"{i}, {worst_win_rate}, {lower_quartile}, {mean_win_rate}"
             s += f", {median_win_rate}, {upper_quartile}, {best_win_rate}"
-
             f.write(s + "\n")
-            f.flush()
 
             print(s)
 
@@ -252,3 +278,5 @@ with open(results_filepath, "w") as f:
             players = list(
                 numpy.random.choice(players, len(players) - len(offspring))
             ) + offspring
+
+save_population()
