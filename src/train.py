@@ -30,6 +30,8 @@ MUTATION_CHANCE_END = 0.1
 
 CROSSOVER_POINTS = 2
 
+SCORE_DIFFERENCE_WEIGHTING = 0.5
+
 
 GENERATION_STRING = f"{POPULATION_SIZE}_{GENERATIONS}_{GAMES_PLAYED}"
 GENERATION_STRING += f"_{CROSSOVER_CHANCE_START}_{CROSSOVER_CHANCE_END}"
@@ -99,7 +101,9 @@ def play_game(player):
         compromise_game.resetGame()
 
         if score[0] > score[1]:
-            player.win_count += 1
+            player.win_count += 1 + \
+                SCORE_DIFFERENCE_WEIGHTING * \
+                (score[0] - score[1]) / (score[0] + score[1])
 
     return player
 
