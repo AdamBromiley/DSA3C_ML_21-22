@@ -234,10 +234,11 @@ population_dump_filepath = create_unique_filename(POPULATION_DUMP_FILEPATH)
 
 signal.signal(signal.SIGINT, signal_handler)
 
-with open(results_filepath, "w", 0) as f:
+with open(results_filepath, "w") as f:
     results_header = f"Generation, Worst, Lower Quartile, Mean, Median"
-    results_header = f", Upper Quartile, Best"
+    results_header += f", Upper Quartile, Best"
     f.write(results_header + "\n")
+    f.flush()
 
     with Pool() as pool:
         for i in range(GENERATIONS):
@@ -260,6 +261,7 @@ with open(results_filepath, "w", 0) as f:
             s = f"{i}, {worst_win_rate}, {lower_quartile}, {mean_win_rate}"
             s += f", {median_win_rate}, {upper_quartile}, {best_win_rate}"
             f.write(s + "\n")
+            f.flush()
 
             print(s)
 
