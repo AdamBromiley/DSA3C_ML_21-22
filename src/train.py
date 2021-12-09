@@ -1,5 +1,6 @@
 import copy
 from multiprocessing import Pool
+import os
 import random
 import statistics
 
@@ -199,7 +200,17 @@ win_rates = []
 
 opponent = RandomPlayer()
 
-with open(RESULTS_FILE, "w") as f:
+results_filepath = RESULTS_FILE
+results_filename, results_file_extension = os.path.splitext(results_filepath)
+results_file_existence_count = 1
+
+while os.path.exists(results_filepath):
+    results_filepath = f"{results_filename}"
+    results_filepath += f" ({results_file_existence_count})"
+    results_filepath += f"{results_file_extension}"
+    results_file_existence_count += 1
+
+with open(results_filepath, "w") as f:
     with Pool() as pool:
         for i in range(GENERATIONS):
             players = pool.map(play_game, players)
