@@ -27,6 +27,11 @@ MUTATION_CHANCE_END = 0.1
 CROSSOVER_POINTS = 2
 
 
+RESULTS_FILE = f"../results/{POPULATION_SIZE}_{GENERATIONS}_{GAMES_PLAYED}"
+RESULTS_FILE += f"_{CROSSOVER_CHANCE_START}_{CROSSOVER_CHANCE_END}"
+RESULTS_FILE += f"_{MUTATION_CHANCE_START}_{MUTATION_CHANCE_END}.csv"
+
+
 # Create numpy RNG generator
 rng = numpy.random.default_rng()
 
@@ -194,7 +199,7 @@ win_rates = []
 
 opponent = RandomPlayer()
 
-with open("results.csv", "w") as f:
+with open(RESULTS_FILE, "w") as f:
     with Pool() as pool:
         for i in range(GENERATIONS):
             players = pool.map(play_game, players)
