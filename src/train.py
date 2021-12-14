@@ -14,32 +14,49 @@ from Layer import linear, relu, tanh
 from NNPlayer import NNPlayer, INPUT_SIZE, OUTPUT_SIZE
 
 
+# Number of players in the population
 POPULATION_SIZE = 1000
+
+# Number of generations
 GENERATIONS = 8000
 
+# Number of games each player plays in a generation
 GAMES_PLAYED = 40
+
+
+# Player fitness is determined by recording their win count; each win
+# contributes 1 to this score. How much the player wins by in a given game can
+# contribute to the fitness by setting this to a non-zero value.
+SCORE_DIFFERENCE_WEIGHTING = 0.5
+
 
 # 51.13.108.128
 # 20.203.186.64
 # 20.79.222.21
 # Best = 400, 1000, 0.3-0.8, 0.3-0.005
+# Number of points used in the k-point crossover
+CROSSOVER_POINTS = 2
+
+# Percentage of population to be selected as parents for breeding. This changes
+# linearly over the training period between the start and end value.
 CROSSOVER_CHANCE_START = 0.2
 CROSSOVER_CHANCE_END = 0.8
+
+# Chance that a gene (weight or bias) is mutated. This changes linearly over
+# the training period between the start and end value.
 MUTATION_CHANCE_START = 0.3
 MUTATION_CHANCE_END = 0.005
 
-CROSSOVER_POINTS = 2
-
-SCORE_DIFFERENCE_WEIGHTING = 0.5
-
-
+# String used to name the population dump and results file
 GENERATION_STRING = f"{POPULATION_SIZE}_{GENERATIONS}_{GAMES_PLAYED}"
 GENERATION_STRING += f"_{CROSSOVER_CHANCE_START}_{CROSSOVER_CHANCE_END}"
 GENERATION_STRING += f"_{MUTATION_CHANCE_START}_{MUTATION_CHANCE_END}"
 GENERATION_STRING += f"_{CROSSOVER_POINTS}"
 
-
+# Pickle dump of the final population
 POPULATION_DUMP_FILEPATH = f"../populations/{GENERATION_STRING}.dat"
+
+# CSV file storing the win-rate for every generation
 RESULTS_FILEPATH = f"../results/{GENERATION_STRING}.csv"
 
 
@@ -219,7 +236,7 @@ def mutate(child, mutation_rate):
             neuron[mask] += random_neuron[mask]
 
 
-structure = [INPUT_SIZE, 23, 24, OUTPUT_SIZE]
+structure = [INPUT_SIZE, 22, 24, OUTPUT_SIZE]
 layer_count = len(structure)
 
 
@@ -279,6 +296,16 @@ with open(results_filepath, "w") as f:
 
             offspring = breed_population(
                 players, crossover_rate, mutation_rate
+            )
+
+            ranks = numpy.arange(POPULATION_SIZE - 1, -1, -1)
+            weights = numpy.exp(ranks / POPULATION_SIZE)
+            weights /= weights.sum()
+
+            breedable_population = numpy.random.choice(
+                players,
+                int(POPULATION_SIZE * crossover_rate),
+                p=weights
             )
 
             players = list(
