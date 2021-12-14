@@ -7,7 +7,8 @@ GRID_COUNT = 3
 ROW_LENGTH = 3
 COLUMN_LENGTH = 3
 
-INPUT_SIZE = GRID_COUNT * 2 + ROW_LENGTH * 2 + COLUMN_LENGTH * 2 + 1 + 1
+#INPUT_SIZE = GRID_COUNT * 2 + ROW_LENGTH * 2 + COLUMN_LENGTH * 2 + 1 + 1
+INPUT_SIZE = GRID_COUNT * 2 + ROW_LENGTH * 2 + COLUMN_LENGTH * 2
 OUTPUT_SIZE = GRID_COUNT * ROW_LENGTH * COLUMN_LENGTH
 
 
@@ -40,14 +41,16 @@ class NNPlayer:
             [player_state.sum((1, 2)), -(opponent_state.sum((1, 2)))], "F"
         )
 
-        board_state = numpy.concatenate((column_sums, row_sums, grid_sums))
+        nn_inputs = numpy.concatenate((column_sums, row_sums, grid_sums))
 
-        score_difference = (player_score - opponent_score) / (pip_count * turn)
-        game_progress = turn / length
-        match_state = numpy.array([score_difference, game_progress])
+        # board_state = numpy.concatenate((column_sums, row_sums, grid_sums))
 
-        # Construct neural network input array
-        nn_inputs = numpy.concatenate((board_state, match_state))
+        # score_difference = (player_score - opponent_score) / (pip_count * turn)
+        # game_progress = turn / length
+        # match_state = numpy.array([score_difference, game_progress])
+
+        # # Construct neural network input array
+        # nn_inputs = numpy.concatenate((board_state, match_state))
 
         # Run neural network for current turn
         output = self.neural_network.propagate(nn_inputs)
