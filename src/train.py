@@ -15,10 +15,10 @@ from NNPlayer import NNPlayer, INPUT_SIZE, OUTPUT_SIZE
 
 
 # Number of players in the population
-POPULATION_SIZE = 1000
+POPULATION_SIZE = 200
 
 # Number of generations
-GENERATIONS = 8000
+GENERATIONS = 100
 
 # Number of games each player plays in a generation
 GAMES_PLAYED = 40
@@ -30,10 +30,6 @@ GAMES_PLAYED = 40
 SCORE_DIFFERENCE_WEIGHTING = 0.5
 
 
-# 51.13.108.128
-# 20.203.186.64
-# 20.79.222.21
-# Best = 400, 1000, 0.3-0.8, 0.3-0.005
 # Number of points used in the k-point crossover
 CROSSOVER_POINTS = 2
 
