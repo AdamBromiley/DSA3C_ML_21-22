@@ -95,8 +95,9 @@ def create_player():
         outputs = structure[i + 1]
 
         weights.append(
-            rng.standard_normal(
-                (outputs, inputs)) * numpy.sqrt(2 / (outputs - 1)
+                rng.standard_normal(
+                    (outputs, inputs)
+                ) * numpy.sqrt(2 / (outputs - 1)
             )
         )
         biases.append(numpy.full(outputs, 0.01))
@@ -110,6 +111,7 @@ def create_player():
 
 def play_game(player):
     player.win_count = 0
+    player.fitness = 0
 
     compromise_game = CompromiseGame(player, opponent, 30, 10)
 
@@ -118,7 +120,8 @@ def play_game(player):
         compromise_game.resetGame()
 
         if score[0] > score[1]:
-            player.win_count += 1 + \
+            player.win_count += 1
+            player.fitness += 1 + \
                 SCORE_DIFFERENCE_WEIGHTING * \
                 (score[0] - score[1]) / (score[0] + score[1])
 
@@ -225,15 +228,24 @@ def mutate(child, mutation_rate):
         random_biases = rng.uniform(-0.05, 0.05, biases.shape)
         biases[mask] += random_biases[mask]
 
-        for neuron in weights:
-            mask = numpy.random.choice(
-                [0, 1],
-                neuron.shape,
-                p=[1 - mutation_rate, mutation_rate]
-            ).astype(bool)
+        # for neuron in weights:
+        #     mask = numpy.random.choice(
+        #         [0, 1],
+        #         neuron.shape,
+        #         p=[1 - mutation_rate, mutation_rate]
+        #     ).astype(bool)
 
-            random_neuron = rng.normal(0, 0.05, neuron.shape)
-            neuron[mask] += random_neuron[mask]
+        #     random_neuron = rng.normal(0, 0.05, neuron.shape)
+        #     neuron[mask] += random_neuron[mask]
+
+        mask = numpy.random.choice(
+            [0, 1],
+            weights.shape,
+            p=[1 - mutation_rate, mutation_rate]
+        ).astype(bool)
+
+        random_neuron = rng.normal(0, 0.05, weights.shape)
+        weights[mask] += random_neuron[mask]
 
 
 structure = [INPUT_SIZE, 22, 24, OUTPUT_SIZE]
@@ -246,8 +258,6 @@ for i in range(POPULATION_SIZE):
     players.append(create_player())
 
 
-win_rates = []
-
 opponent = RandomPlayer()
 
 results_filepath = create_unique_filename(RESULTS_FILEPATH)
@@ -257,7 +267,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 with open(results_filepath, "w") as f:
     results_header = f"Generation, Worst, Lower Quartile, Mean, Median"
-    results_header += f", Upper Quartile, Best"
+    results_header += f", Upper Quartile, Best, Median Fitness"
     f.write(results_header + "\n")
     f.flush()
 
@@ -265,11 +275,12 @@ with open(results_filepath, "w") as f:
         for i in range(GENERATIONS):
             players = pool.map(play_game, players)
 
-            # Sort players array by player.win_count (descending)
-            players.sort(key=lambda player: player.win_count, reverse=True)
+            # Sort players array by player.fitness (descending)
+            players.sort(key=lambda player: player.fitness, reverse=True)
 
+
+            # Get win-rate statistics
             win_counts = [player.win_count for player in players]
-
             worst_win_rate = min(win_counts) / GAMES_PLAYED
             lower_quartile = numpy.quantile(win_counts, 0.25) / GAMES_PLAYED
             mean_win_rate = statistics.mean(win_counts) / GAMES_PLAYED
@@ -277,10 +288,13 @@ with open(results_filepath, "w") as f:
             upper_quartile = numpy.quantile(win_counts, 0.75) / GAMES_PLAYED
             best_win_rate = max(win_counts) / GAMES_PLAYED
 
-            win_rates.append(mean_win_rate)
+            # Get fitness statistics
+            fitnesses = [player.fitness for player in players]
+            median_fitness = statistics.median(fitnesses)
 
             s = f"{i}, {worst_win_rate}, {lower_quartile}, {mean_win_rate}"
             s += f", {median_win_rate}, {upper_quartile}, {best_win_rate}"
+            s += f", {median_fitness}"
             f.write(s + "\n")
             f.flush()
 
