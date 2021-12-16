@@ -90,11 +90,7 @@ def create_player():
         inputs = structure[i]
         outputs = structure[i + 1]
 
-        weights.append(
-            rng.standard_normal(
-                (outputs, inputs)
-            ) * numpy.sqrt(2 / (outputs - 1))
-        )
+        weights.append(rng.normal(0, 2 / inputs, (outputs, inputs)))
         biases.append(numpy.full(outputs, 0.01))
 
     activation_functions = [relu, relu, linear]
