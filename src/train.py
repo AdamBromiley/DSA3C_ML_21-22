@@ -35,8 +35,8 @@ CROSSOVER_POINTS = 2
 
 # Percentage of population to be selected as parents for breeding. This changes
 # linearly over the training period between the start and end value.
-CROSSOVER_CHANCE_START = 0.2
-CROSSOVER_CHANCE_END = 0.8
+CROSSOVER_CHANCE_START = 0.25
+CROSSOVER_CHANCE_END = 0.5
 
 # Chance that a gene (weight or bias) is mutated. This changes linearly over
 # the training period between the start and end value.
@@ -140,6 +140,7 @@ def breed_population(population, crossover_rate, mutation_rate):
     offspring = []
 
     for i in range(0, len(breedable_population) - 1, 2):
+        # We deepcopy so the original parents remain unmodified
         child1 = copy.deepcopy(breedable_population[i])
         child2 = copy.deepcopy(breedable_population[i + 1])
         breed(child1, child2, mutation_rate)
@@ -148,8 +149,15 @@ def breed_population(population, crossover_rate, mutation_rate):
     return offspring
 
 
+debug_flag = 1
 def breed(daddy, mummy, mutation_rate):
+    global debug_flag
+    if debug_flag == 1:
+        print(f"Daddy:\n{daddy.getNN().getLayers()[0].getMatrix()}\nMummy:\n{mummy.getNN().getLayers()[0].getMatrix()}")
     crossover(daddy, mummy)
+    if debug_flag == 1:
+        print(f"Child1:\n{daddy.getNN().getLayers()[0].getMatrix()}\nChild2:\n{mummy.getNN().getLayers()[0].getMatrix()}")
+    debug_flag = 0
     mutate(daddy, mutation_rate)
     mutate(mummy, mutation_rate)
 
@@ -167,7 +175,12 @@ def crossover(daddy, mummy):
             range(len(daddy_biases)), CROSSOVER_POINTS
         )
 
-        k_point_crossover(daddy_biases, mummy_biases, crossover_points)
+        daddy_layer.biases, mummy_layer.biases = k_point_crossover(
+            daddy_biases,
+            mummy_biases,
+            crossover_points
+        )
+
 
         daddy_weights = daddy_layer.getMatrix()
         mummy_weights = mummy_layer.getMatrix()
@@ -180,19 +193,24 @@ def crossover(daddy, mummy):
             range(len(flattened_daddy_weights)), CROSSOVER_POINTS
         )
 
-        k_point_crossover(
+        new_flattened_daddy_weights, new_flattened_mummy_weights = k_point_crossover(
             flattened_daddy_weights,
             flattened_mummy_weights,
             crossover_points
         )
 
-        daddy_weights = flattened_daddy_weights.reshape(daddy_weights.shape)
-        mummy_weights = flattened_mummy_weights.reshape(mummy_weights.shape)
+        daddy_layer.weights = new_flattened_daddy_weights.reshape(daddy_weights.shape)
+        mummy_layer.weights = new_flattened_mummy_weights.reshape(mummy_weights.shape)
 
 
 def k_point_crossover(array1, array2, crossover_points):
+    new_array1 = array1
+    new_array2 = array2
+
     for point in crossover_points:
-        single_point_crossover(array1, array2, point)
+        new_array1, new_array2 = single_point_crossover(new_array1, new_array2, point)
+
+    return new_array1, new_array2
 
 
 def single_point_crossover(array1, array2, crossover_point):
@@ -206,8 +224,7 @@ def single_point_crossover(array1, array2, crossover_point):
         array1[crossover_point:]
     )
 
-    array1 = new_array1
-    array2 = new_array2
+    return new_array1, new_array2
 
 
 def mutate(child, mutation_rate):
@@ -223,16 +240,6 @@ def mutate(child, mutation_rate):
 
         random_biases = rng.uniform(-0.05, 0.05, biases.shape)
         biases[mask] += random_biases[mask]
-
-        # for neuron in weights:
-        #     mask = numpy.random.choice(
-        #         [0, 1],
-        #         neuron.shape,
-        #         p=[1 - mutation_rate, mutation_rate]
-        #     ).astype(bool)
-
-        #     random_neuron = rng.normal(0, 0.05, neuron.shape)
-        #     neuron[mask] += random_neuron[mask]
 
         mask = numpy.random.choice(
             [0, 1],
