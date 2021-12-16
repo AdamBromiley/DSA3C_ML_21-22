@@ -18,7 +18,7 @@ from NNPlayer import NNPlayer, INPUT_SIZE, OUTPUT_SIZE
 POPULATION_SIZE = 200
 
 # Number of generations
-GENERATIONS = 100
+GENERATIONS = 4000
 
 # Number of games each player plays in a generation
 GAMES_PLAYED = 40
@@ -35,12 +35,12 @@ CROSSOVER_POINTS = 2
 
 # Percentage of population to be selected as parents for breeding. This changes
 # linearly over the training period between the start and end value.
-CROSSOVER_CHANCE_START = 0.25
-CROSSOVER_CHANCE_END = 0.5
+CROSSOVER_CHANCE_START = 0.8
+CROSSOVER_CHANCE_END = 0.8
 
 # Chance that a gene (weight or bias) is mutated. This changes linearly over
 # the training period between the start and end value.
-MUTATION_CHANCE_START = 0.3
+MUTATION_CHANCE_START = 0.4
 MUTATION_CHANCE_END = 0.005
 
 # String used to name the population dump and results file
@@ -91,10 +91,9 @@ def create_player():
         outputs = structure[i + 1]
 
         weights.append(
-                rng.standard_normal(
-                    (outputs, inputs)
-                ) * numpy.sqrt(2 / (outputs - 1)
-            )
+            rng.standard_normal(
+                (outputs, inputs)
+            ) * numpy.sqrt(2 / (outputs - 1))
         )
         biases.append(numpy.full(outputs, 0.01))
 
@@ -140,60 +139,67 @@ def breed_population(population, crossover_rate, mutation_rate):
     offspring = []
 
     for i in range(0, len(breedable_population) - 1, 2):
-        # We deepcopy so the original parents remain unmodified
-        child1 = copy.deepcopy(breedable_population[i])
-        child2 = copy.deepcopy(breedable_population[i + 1])
-        breed(child1, child2, mutation_rate)
+        child1, child2 = breed(
+            breedable_population[i],
+            breedable_population[i + 1],
+            mutation_rate
+        )
         offspring += [child1, child2]
 
     return offspring
 
 
-def breed(daddy, mummy, mutation_rate):
-    crossover(daddy, mummy)
-    mutate(daddy, mutation_rate)
-    mutate(mummy, mutation_rate)
+def breed(parent1, parent2, mutation_rate):
+    # We deepcopy so the original parents remain unmodified
+    child1 = copy.deepcopy(parent1)
+    child2 = copy.deepcopy(parent2)
+
+    crossover(child1, child2)
+    mutate(child1, mutation_rate)
+    mutate(child2, mutation_rate)
+
+    return child1, child2
 
 
-def crossover(daddy, mummy):
-    daddy_layers = daddy.getNN().getLayers()
-    mummy_layers = mummy.getNN().getLayers()
+def crossover(parent1, parent2):
+    parent1_layers = parent1.getNN().getLayers()
+    parent2_layers = parent2.getNN().getLayers()
 
-    for daddy_layer, mummy_layer in zip(daddy_layers, mummy_layers):
-        daddy_biases = daddy_layer.getBiasVector()
-        mummy_biases = mummy_layer.getBiasVector()
+    for parent1_layer, parent2_layer in zip(parent1_layers, parent2_layers):
+        parent1_biases = parent1_layer.getBiasVector()
+        parent2_biases = parent2_layer.getBiasVector()
 
         # Get array of random crossover points
         crossover_points = random.sample(
-            range(len(daddy_biases)), CROSSOVER_POINTS
+            range(len(parent1_biases)), CROSSOVER_POINTS
         )
 
-        daddy_layer.biases, mummy_layer.biases = k_point_crossover(
-            daddy_biases,
-            mummy_biases,
+        parent1_layer.biases, parent2_layer.biases = k_point_crossover(
+            parent1_biases,
+            parent2_biases,
             crossover_points
         )
 
 
-        daddy_weights = daddy_layer.getMatrix()
-        mummy_weights = mummy_layer.getMatrix()
+        parent1_weights = parent1_layer.getMatrix()
+        parent2_weights = parent2_layer.getMatrix()
 
-        flattened_daddy_weights = numpy.ndarray.flatten(daddy_weights)
-        flattened_mummy_weights = numpy.ndarray.flatten(mummy_weights)
+        flattened_parent1_weights = numpy.ndarray.flatten(parent1_weights)
+        flattened_parent2_weights = numpy.ndarray.flatten(parent2_weights)
 
         # Get array of random crossover points
         crossover_points = random.sample(
-            range(len(flattened_daddy_weights)), CROSSOVER_POINTS
+            range(len(flattened_parent1_weights)), CROSSOVER_POINTS
         )
 
-        new_flattened_daddy_weights, new_flattened_mummy_weights = k_point_crossover(
-            flattened_daddy_weights,
-            flattened_mummy_weights,
+        new_flattened_parent1_weights, new_flattened_parent2_weights = k_point_crossover(
+            flattened_parent1_weights,
+            flattened_parent2_weights,
             crossover_points
         )
 
-        daddy_layer.weights = new_flattened_daddy_weights.reshape(daddy_weights.shape)
-        mummy_layer.weights = new_flattened_mummy_weights.reshape(mummy_weights.shape)
+        parent1_layer.weights = new_flattened_parent1_weights.reshape(parent1_weights.shape)
+        parent2_layer.weights = new_flattened_parent2_weights.reshape(parent2_weights.shape)
 
 
 def k_point_crossover(array1, array2, crossover_points):
