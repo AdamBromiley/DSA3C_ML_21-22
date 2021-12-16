@@ -149,15 +149,8 @@ def breed_population(population, crossover_rate, mutation_rate):
     return offspring
 
 
-debug_flag = 1
 def breed(daddy, mummy, mutation_rate):
-    global debug_flag
-    if debug_flag == 1:
-        print(f"Daddy:\n{daddy.getNN().getLayers()[0].getMatrix()}\nMummy:\n{mummy.getNN().getLayers()[0].getMatrix()}")
     crossover(daddy, mummy)
-    if debug_flag == 1:
-        print(f"Child1:\n{daddy.getNN().getLayers()[0].getMatrix()}\nChild2:\n{mummy.getNN().getLayers()[0].getMatrix()}")
-    debug_flag = 0
     mutate(daddy, mutation_rate)
     mutate(mummy, mutation_rate)
 
