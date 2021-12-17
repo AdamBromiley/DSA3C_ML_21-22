@@ -3,7 +3,7 @@ import numpy
 from operator import attrgetter
 import pickle
 
-from CompromiseGame_optimised import CompromiseGame, RandomPlayer
+from CompromiseGame import CompromiseGame, RandomPlayer
 
 
 # Number of games each player plays in the competition to determine the best
@@ -11,7 +11,7 @@ from CompromiseGame_optimised import CompromiseGame, RandomPlayer
 COMPETITION_GAMES_PLAYED = 400
 
 # Pickle dump of the final population
-POPULATION_DUMP_FILEPATH = f"../populations/something.dat"
+POPULATION_DUMP_FILEPATH = f"../populations/200_4000_40_0.8_0.8_0.4_0.005_2.dat"
 
 
 def play_game(player):
@@ -39,6 +39,7 @@ with Pool() as pool:
     players = pool.map(play_game, players)
 
 best_player = max(players, key=attrgetter("win_count"))
+print(f"Best win-rate: {best_player.win_count}")
 
 
 numpy.set_printoptions(precision=None)
