@@ -16,11 +16,11 @@ class NNPlayer:
     def getSpecs():
         return (INPUT_SIZE, OUTPUT_SIZE)
 
-    def __init__(self, weights, biases, activiation_functions):
+    def __init__(self, weights, biases, activation_functions):
         self.neural_network = NeuralNetwork(
             weights,
             biases,
-            activiation_functions
+            activation_functions
         )
 
     def play(self, player_state, opponent_state,
