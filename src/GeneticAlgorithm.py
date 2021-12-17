@@ -9,8 +9,8 @@ import sys
 
 import numpy
 
-from CompromiseGame_optimised import CompromiseGame, RandomPlayer
-from Layer import linear, relu, tanh
+from CompromiseGame import CompromiseGame, RandomPlayer, GreedyPlayer, SmartGreedyPlayer
+from Layer import linear, relu
 from NNPlayer import NNPlayer, INPUT_SIZE, OUTPUT_SIZE
 
 
