@@ -20,8 +20,8 @@ POPULATION_SIZE = 200
 # Number of generations
 GENERATIONS = 4000
 
-# Number of games each player plays in a generation
-GAMES_PLAYED = 40
+# Number of games each player plays against each opponent in a generation
+GAMES_PLAYED = 20
 
 
 # Player fitness is determined by recording their win count; each win
@@ -54,6 +54,9 @@ POPULATION_DUMP_FILEPATH = f"../populations/{GENERATION_STRING}.dat"
 
 # CSV file storing the win-rate for every generation
 RESULTS_FILEPATH = f"../results/{GENERATION_STRING}.csv"
+
+# Pickle dump of a population to load (optional)
+POPULATION_LOAD_FILEPATH = ""
 
 
 # Create numpy RNG generator
@@ -104,17 +107,20 @@ def play_game(player):
     player.win_count = 0
     player.fitness = 0
 
-    compromise_game = CompromiseGame(player, opponent, 30, 10)
+    for opponent in opponents:
+        compromise_game = CompromiseGame(player, opponent, 30, 10)
 
-    for _ in range(GAMES_PLAYED):
-        score = compromise_game.play()
-        compromise_game.resetGame()
+        for _ in range(GAMES_PLAYED):
+            score = compromise_game.play()
+            compromise_game.resetGame()
 
-        if score[0] > score[1]:
-            player.win_count += 1
-            player.fitness += 1 + \
-                SCORE_DIFFERENCE_WEIGHTING * \
-                (score[0] - score[1]) / (score[0] + score[1])
+            if score[0] > score[1]:
+                player.win_count += 1
+                player.fitness += opponent.weighting * (
+                    1 + \
+                    SCORE_DIFFERENCE_WEIGHTING * \
+                    (score[0] - score[1]) / (score[0] + score[1])
+                )
 
     return player
 
@@ -250,13 +256,26 @@ structure = [INPUT_SIZE, 22, 24, OUTPUT_SIZE]
 layer_count = len(structure)
 
 
-players = []
+if len(POPULATION_LOAD_FILEPATH) == 0:
+    players = []
 
-for i in range(POPULATION_SIZE):
-    players.append(create_player())
+    for i in range(POPULATION_SIZE):
+        players.append(create_player())
+else:
+    with open(POPULATION_LOAD_FILEPATH, "rb") as f:
+        players = pickle.load(f)
 
 
-opponent = RandomPlayer()
+random_opponent = RandomPlayer()
+greedy_opponent = GreedyPlayer()
+smart_greedy_opponent = SmartGreedyPlayer()
+
+random_opponent.weighting = 1
+greedy_opponent.weighting = 1.25
+smart_greedy_opponent.weighting = 1.5
+
+opponents = [random_opponent, greedy_opponent, smart_greedy_opponent]
+total_games_played = GAMES_PLAYED * len(opponents)
 
 results_filepath = create_unique_filename(RESULTS_FILEPATH)
 population_dump_filepath = create_unique_filename(POPULATION_DUMP_FILEPATH)
@@ -279,12 +298,13 @@ with open(results_filepath, "w") as f:
 
             # Get win-rate statistics
             win_counts = [player.win_count for player in players]
-            worst_win_rate = min(win_counts) / GAMES_PLAYED
-            lower_quartile = numpy.quantile(win_counts, 0.25) / GAMES_PLAYED
-            mean_win_rate = statistics.mean(win_counts) / GAMES_PLAYED
-            median_win_rate = statistics.median(win_counts) / GAMES_PLAYED
-            upper_quartile = numpy.quantile(win_counts, 0.75) / GAMES_PLAYED
-            best_win_rate = max(win_counts) / GAMES_PLAYED
+
+            worst_win_rate = min(win_counts) / total_games_played
+            lower_quartile = numpy.quantile(win_counts, 0.25) / total_games_played
+            mean_win_rate = statistics.mean(win_counts) / total_games_played
+            median_win_rate = statistics.median(win_counts) / total_games_played
+            upper_quartile = numpy.quantile(win_counts, 0.75) / total_games_played
+            best_win_rate = max(win_counts) / total_games_played
 
             # Get fitness statistics
             fitnesses = [player.fitness for player in players]
